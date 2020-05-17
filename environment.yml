@@ -1,0 +1,12 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - ipykernel
+  - python=3.8
+  - matplotlib
+  - numpy
+  - pandas
+  - networkx
+  - scikit-learn
+

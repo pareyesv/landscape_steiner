@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from scipy import interpolate
 
 # creates 1st, 2nd derivatives of 4th order
@@ -20,7 +20,7 @@ def change_bndy(B,s):
     A[0,:] = s; A[-1,:] = s; A[:,0] = s; A[:,-1] = s;
     return A
 
-def find_landscape(Nx0, L, A0, points):
+def find_landscape(box_size, terminals, Nx0 = 50, A0 = 5000):
 
     '''
     Computes landscape function for a set of points. Output is a 2D interpolaiton 
@@ -33,6 +33,8 @@ def find_landscape(Nx0, L, A0, points):
     points: list of points where important nodes are
     
     '''
+    
+    L = box_size; points = terminals;
     
     #1D grid
     xv = np.linspace(0, L, Nx0+1) 

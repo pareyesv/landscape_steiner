@@ -33,6 +33,3 @@ Edit the file `environment.yml` and add/remove packages, then run:
 ```
 conda env update --name landscape_steiner --file environment.yml  --prune
 ```
-
-
-

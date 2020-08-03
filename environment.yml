@@ -9,4 +9,7 @@ dependencies:
   - pandas
   - networkx
   - scikit-learn
+  - pip
+  - pip:
+    - scikit-network
 

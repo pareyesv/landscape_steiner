@@ -9,6 +9,9 @@ dependencies:
   - pandas
   - networkx
   - scikit-learn
+  # optimization
+  - coincbc
+  - pyomo
   - pip
   - pip:
     - scikit-network

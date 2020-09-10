@@ -3,6 +3,7 @@ channels:
   - defaults
 dependencies:
   - ipykernel
+  - lxml
   - python=3.8
   - matplotlib
   - numpy

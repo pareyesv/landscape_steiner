@@ -7,6 +7,7 @@ import pandas as pd
 
 __version__ = "0.1"
 
+
 class SteinerTreeProblem(nx.Graph):
     '''
     A class to abstract a STP problem as a network x graph
@@ -41,19 +42,22 @@ class SteinerTreeProblem(nx.Graph):
     TODO: create functions to set node and edge attributes and refactor
     '''
 
-    def __init__(self,
-                update_factors=None,
-                stp_file=None,
-                default_prize=1,
-                default_weight=1,
-                node_period_attributes:dict=None,
-                edge_period_attributes:dict=None,
-                graph_period_attributes:dict=None,
-                period_suffix_format=r"-{:02d}",
-                node_attribute_format="{}",
-                edge_attribute_format="{}",
-                graph_attribute_format="{}",
-                ):
+    def __init__(
+        self,
+        update_factors=None,
+        stp_file=None,
+        default_prize=1,
+        default_weight=1,
+        node_period_attributes: dict = None,
+        edge_period_attributes: dict = None,
+        graph_period_attributes: dict = None,
+        period_suffix_format=r"-{:02d}",
+        node_attribute_format="{}",
+        edge_attribute_format="{}",
+        graph_attribute_format="{}",
+        terminal_value=1,
+        no_terminal_value=0,
+    ):
 
         nx.Graph.__init__(self)
 
@@ -66,6 +70,8 @@ class SteinerTreeProblem(nx.Graph):
         self.node_attribute_format = node_attribute_format
         self.edge_attribute_format = edge_attribute_format
         self.graph_attribute_format = graph_attribute_format
+        self.terminal_value = terminal_value
+        self.no_terminal_value = no_terminal_value
 
         self.graph["periods"] = self.num_periods()
         self.set_graph_period_attribute("update_factor", self._uf)
@@ -76,12 +82,13 @@ class SteinerTreeProblem(nx.Graph):
                 self.set_graph_period_attribute(key, value)
 
         if stp_file:
-            self.parse(stp_file,
-                        default_prize=default_prize,
-                        default_weight=default_weight,
-                        node_period_attributes=node_period_attributes,
-                        edge_period_attributes=edge_period_attributes,
-                        )
+            self.parse(
+                stp_file,
+                default_prize=default_prize,
+                default_weight=default_weight,
+                node_period_attributes=node_period_attributes,
+                edge_period_attributes=edge_period_attributes,
+            )
 
     def num_periods(self):
         return len(self._uf)
@@ -94,10 +101,10 @@ class SteinerTreeProblem(nx.Graph):
             values (int or float or list): list of values per period, or a number if constant
         """
         if not isinstance(values, list):
-            values = [values]*self.num_periods()
+            values = [values] * self.num_periods()
         for t in self.iter_periods():
-            self.graph[(self.graph_attribute_format.format(name)
-                        + self.period_suffix_format).format(t)] = values[t-1]
+            self.graph[(self.graph_attribute_format.format(name) +
+                        self.period_suffix_format).format(t)] = values[t - 1]
 
     def get_graph_period_attribute(self, name, t=None):
         """Get graph attribute per period.
@@ -113,15 +120,17 @@ class SteinerTreeProblem(nx.Graph):
         if t is None:
             return self.graph[name]
         else:
-            return self.graph[(self.graph_attribute_format.format(name)
-                        + self.period_suffix_format).format(t)]
+            return self.graph[(self.graph_attribute_format.format(name) +
+                               self.period_suffix_format).format(t)]
 
-    def parse(self, stp_file,
-            default_prize=1,
-            default_weight=1,
-            node_period_attributes:dict=None,
-            edge_period_attributes:dict=None,
-            ):
+    def parse(
+        self,
+        stp_file,
+        default_prize=1,
+        default_weight=1,
+        node_period_attributes: dict = None,
+        edge_period_attributes: dict = None,
+    ):
         '''
         Parses a STP file.
 
@@ -140,10 +149,12 @@ class SteinerTreeProblem(nx.Graph):
 
             # remove comment
             idx = line.find("#")
-            if idx >= 0: line = line[0:idx]
+            if idx >= 0:
+                line = line[0:idx]
 
             # parse graph section
-            if line.startswith("SECTION Graph") or line.startswith("Section Graph"):
+            if line.startswith("SECTION Graph") or line.startswith(
+                    "Section Graph"):
                 in_graph, in_terms, in_coords = True, False, False
             if in_graph:
                 if line.startswith("Nodes"):
@@ -156,10 +167,10 @@ class SteinerTreeProblem(nx.Graph):
                     if line.startswith("E "):
                         sp_line = line.split()
                         v1, v2 = int(sp_line[1]), int(sp_line[2])
-                        if len(sp_line)<4:
-                            edges.append( (v1,v2,default_weight))
+                        if len(sp_line) < 4:
+                            edges.append((v1, v2, default_weight))
                         else:
-                            edges.append( (v1,v2,int(sp_line[3])))
+                            edges.append((v1, v2, int(sp_line[3])))
                 # STP files also can have "arcs", but they are not supported
                 #if line.startswith("A"):
                 #    sp_line = line.split()
@@ -167,26 +178,28 @@ class SteinerTreeProblem(nx.Graph):
                 #    arcs.append( (v1,v2,w))
 
             # parse terminals
-            if line.startswith("SECTION Terminals") or line.startswith("Section Terminals"):
+            if line.startswith("SECTION Terminals") or line.startswith(
+                    "Section Terminals"):
                 in_graph, in_terms, in_coords = False, True, False
 
             if in_terms:
                 if not line.startswith("Terminals") and line.startswith("T"):
-                    terminals.add( int(line.split()[1]) )
+                    terminals.add(int(line.split()[1]))
 
             # parse coordinates
-            if line.startswith("SECTION Coordinates") or line.startswith("Section Coordinates"):
+            if line.startswith("SECTION Coordinates") or line.startswith(
+                    "Section Coordinates"):
                 in_graph, in_terms, in_coords = False, False, True
 
             if in_coords:
                 if line.startswith("DD"):
                     sp = line.split()
                     n, x, y = int(sp[1]), int(sp[2]), int(sp[3])
-                    coords[n] = (x,y)
+                    coords[n] = (x, y)
 
         # create the undirected graph
 
-        self.add_nodes_from([i+1 for i in range(n_nodes)])
+        self.add_nodes_from([i + 1 for i in range(n_nodes)])
 
         for u in self.nodes():
             # prize
@@ -195,94 +208,120 @@ class SteinerTreeProblem(nx.Graph):
             if node_period_attributes is not None:
                 for key, value in node_period_attributes.items():
                     for t in self.iter_periods():
-                        self.nodes[u][self.node_attribute_format.format(key) + self.period_suffix_format.format(t)] = value
+                        self.nodes[u][
+                            self.node_attribute_format.format(key) +
+                            self.period_suffix_format.format(t)] = value
             # terminals
             if u in terminals:
-                self.nodes[u]["is_terminal"] = 1
+                self.nodes[u]["is_terminal"] = self.terminal_value
             else:
-                self.nodes[u]["is_terminal"] = 0
+                self.nodes[u]["is_terminal"] = self.no_terminal_value
 
         for e in edges:
             # weight/distance
-            self.add_edge(e[0],e[1],weight=e[2])
-            self.add_edge(e[0],e[1],distance=e[2])
+            self.add_edge(e[0], e[1], weight=e[2])
+            self.add_edge(e[0], e[1], distance=e[2])
             # edge attributes
             if edge_period_attributes is not None:
                 for key, value in edge_period_attributes.items():
                     for t in self.iter_periods():
-                        self.edges[(e[0],e[1])][self.edge_attribute_format.format(key)
-                            + self.period_suffix_format.format(t)] = value
+                        self.edges[(
+                            e[0],
+                            e[1])][self.edge_attribute_format.format(key) +
+                                   self.period_suffix_format.format(t)] = value
 
-
-        if len(coords)>0:
-            for u,(x,y) in coords.items():
+        if len(coords) > 0:
+            for u, (x, y) in coords.items():
                 self.nodes[u]["x"] = x
                 self.nodes[u]["y"] = y
 
     def iter_periods(self):
         """Returns a period iterator."""
-        for t in range(1, self.num_periods()+1):
+        for t in range(1, self.num_periods() + 1):
             yield t
 
-    def is_terminal(self,t):
-        return self.nodes[t]["is_terminal"] == 1
+    def iter_terminals(self):
+        """Terminal iterator."""
+        return (node for node, value in nx.get_node_attributes(
+            self, "is_terminal").items() if value == self.terminal_value)
 
-    def add_terminal(self,t):
-        self.nodes[t]["is_terminal"] = 1
+    def terminals(self):
+        """List of terminals."""
+        return list(self.iter_terminals())
 
-    def get_coordinates(self,node):
-        return (self._coords[node]["x"], self._coords[node]["y"])
+    def is_terminal(self, t):
+        return self.nodes[t]["is_terminal"] == self.terminal_value
 
-    def set_coordinates(self,node,x,y):
-        self._coords[node] = (x,y)
+    def add_terminal(self, t):
+        self.nodes[t]["is_terminal"] = self.terminal_value
 
-    def write_stp(self,file_name):
-        f = open(file_name,"w")
-        print("0 STP File, STP Format Version 1.0",file=f)
+    def coordinates_dict(self) -> dict:
+        x_coords = nx.get_node_attributes(self, "x")
+        y_coords = nx.get_node_attributes(self, "y")
+        return {
+            n: (x_coords.get(n, None), y_coords.get(n, None))
+            for n in self.nodes()
+        }
 
-        print("\nSECTION Graph",file=f)
-        print(f"Nodes {self.order()}",file=f)
-        print(f"Edges {self.size()}",file=f)
-        weights = nx.get_edge_attributes(self,'weight')
-        for u,v in self.edges():
-            print(f"E {u} {v} {weights[u,v]}",file=f)
-        print ("END",file=f)
+    def get_coordinates(self, node):
+        return (self.nodes[node]["x"], self.nodes[node]["y"])
 
+    def set_coordinates(self, node, x, y):
+        self.nodes[node]["x"] = x
+        self.nodes[node]["y"] = y
 
-        print("\nSECTION Terminals",file=f)
-        print(f"Terminals {len(self.terminals())}",file=f)
+    def write_stp(self, file_name):
+        f = open(file_name, "w")
+        print("0 STP File, STP Format Version 1.0", file=f)
+
+        print("\nSECTION Graph", file=f)
+        print(f"Nodes {self.order()}", file=f)
+        print(f"Edges {self.size()}", file=f)
+        weights = nx.get_edge_attributes(self, 'weight')
+        for u, v in self.edges():
+            print(f"E {u} {v} {weights[u,v]}", file=f)
+        print("END", file=f)
+
+        print("\nSECTION Terminals", file=f)
+        print(f"Terminals {len(self.terminals())}", file=f)
         for t in self.terminals():
-            print(f"T {t}",file=f)
-        print ("END",file=f)
+            print(f"T {t}", file=f)
+        print("END", file=f)
 
+        if len(self.coordinates_dict()) > 0:
+            print("\nSECTION Coordinates", file=f)
+            for n, (x, y) in self.coordinates_dict().items():
+                print(f"DD {n} {x} {y}", file=f)
+            print("END", file=f)
 
-        if len(self._coords)>0:
-            print("\nSECTION Coordinates",file=f)
-            for n,(x,y) in self._coords.items():
-                print(f"DD {n} {x} {y}",file=f)
-            print ("END",file=f)
-
-        print("\nEOF",file=f)
+        print("\nEOF", file=f)
         f.close()
 
-    def write_graphml(self,file_name):
-        nx.write_graphml_lxml(self,file_name)
+    def write_graphml(self, file_name):
+        nx.write_graphml_lxml(self, file_name)
 
-    def edges_df(self) -> pd.DataFrame:
+    def edge_attributes_df(self) -> pd.DataFrame:
         """Returns a pandas DataFrame where each row contains edge attributes"""
         return nx.to_pandas_edgelist(self).set_index(["source", "target"])
 
-    def nodes_df(self, index_name="node")  -> pd.DataFrame:
+    def node_attributes_df(self, index_name="node") -> pd.DataFrame:
         """Returns a pandas DataFrame where each row contains node attributes"""
         df = pd.DataFrame.from_dict(dict(self.nodes(data=True)), orient='index')
         df.index.name = index_name
         return df
 
+    def graph_attributes(self) -> dict:
+        """Returns a dictionnary with the graph attributes.
+        """
+        return self.graph
+
+
 if __name__ == '__main__':
     for i in range(10):
         file_name = f"stlib/datasets/B/b{i+1:02d}.stp"
-        print (f"Parsing file {file_name}")
-        stp = SteinerTreeProblem(stp_file=file_name,update_factors=[1.0, 0.75, 0.5, 0.25, 0.0])
-        print (f"Found {stp.order()} nodes and {stp.size()} edges")
+        print(f"Parsing file {file_name}")
+        stp = SteinerTreeProblem(stp_file=file_name,
+                                 update_factors=[1.0, 0.75, 0.5, 0.25, 0.0])
+        print(f"Found {stp.order()} nodes and {stp.size()} edges")
         stp.write_graphml(f"b{i+1:02d}.graphml")
         #print (f"Edges are {stp.edges()}")

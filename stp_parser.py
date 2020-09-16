@@ -2,6 +2,8 @@
 An implementation of STP instances using networkx
 '''
 
+from typing import List
+
 import networkx as nx
 import pandas as pd
 
@@ -314,6 +316,33 @@ class SteinerTreeProblem(nx.Graph):
         """Returns a dictionnary with the graph attributes.
         """
         return self.graph
+
+    def refactor_attribute_periods(
+        self,
+        attribute_list: List[str] = ["update_factor"],
+        stp_attributes_dict: dict = None,
+        attribute_format: str = None,
+    ):
+        """Refactor multi-period attributes into one list-valued attribute.
+
+        The list order corresponds to the values for different periods.
+        """
+        if stp_attributes_dict is None:
+            stp_attributes_dict = self.graph_attributes()
+        if attribute_format is None:
+            attribute_format = self.graph_attribute_format
+
+        updated_attributes = dict.fromkeys(attribute_list,
+                                           [None] * self.num_periods())
+        for attribute in attribute_list:
+            attribute_value_list = []
+            for t in self.iter_periods():
+                attribute_name = (attribute_format.format(attribute) +
+                                  self.period_suffix_format.format(t))
+                attribute_value_list.append(
+                    stp_attributes_dict.get(attribute_name, None))
+            updated_attributes[attribute] = attribute_value_list
+        return updated_attributes
 
 
 if __name__ == '__main__':

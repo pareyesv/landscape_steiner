@@ -8,6 +8,7 @@ dependencies:
   - matplotlib
   - numpy
   - pandas
+  - parse
   - networkx
   - scikit-learn
   # optimization

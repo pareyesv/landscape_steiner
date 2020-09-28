@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import itertools 
+import time
 
 import networkx as nx
 from networkx.algorithms import approximation as apx
@@ -16,7 +18,7 @@ def make_random_terminals(box_size, Nterminals):
     
     '''Generates random terminals on a grid of given size'''
     
-    terminals = np.random.randint(0, high = box_size, size=(Nterminals, 2)) 
+    terminals = np.random.randint(1, high = box_size, size=(Nterminals, 2)) 
     terminals = list(map(tuple, terminals))
     
     return terminals
@@ -91,6 +93,27 @@ def plot_graph_on_grid(G, box_size, tree = None, fig_size = 6):
     
     plt.show()
 
+def plot_many_graphs_on_grid(list_G, box_size, fig_size = 6):
+    
+    # axes 
+    fig, ax = plt.subplots(figsize=(fig_size,fig_size));
+
+    # set limits
+    plt.xlim(0, box_size); plt.ylim(0, box_size);
+    
+    # tick parameters
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+    
+    colors = [ "red", "blue", "green", "yellow", "purple", "orange"]
+    
+    for G in list_G:
+        terminals = get_terminals(G)
+        nx.draw_networkx_edges(G, get_pos(G), edge_color = random.choice(colors))
+        nx.draw_networkx_nodes(G, get_pos(G), nodelist = terminals, node_size = 50)
+    
+    plt.show()
+    
+    
 def remove_edges_with_landscape(G, landscape, alpha):
     
     '''Remove edges from G using landscape(x,y) > alpha, and also delete nodes left with no edges attached to them '''
@@ -111,13 +134,22 @@ def remove_edges_with_landscape(G, landscape, alpha):
         if G.degree(node) == 0 and not node in terminals :
             G.remove_node(node)    
         
+    # delete nodes with degree 1; weird! would be nice to fix this
+    #ends = [ x[0] for x in G.degree() if x[1] <= 1]
+    #G.remove_nodes_from(ends)
+        
     return G 
     
-def graph_info(G, verbosity = False):
+def extract_proper_clusters(G):
+    '''Get clusters of nodes/edges which have terminals on them'''
+    clusters = [G.subgraph(c).copy() for c in nx.connected_components(G) if len(get_terminals(G.subgraph(c).copy())) ]
+    return clusters
+    
+def graph_info(G, verbosity = True):
     '''count clusters, nodes, terminals and edges of G'''
     terminals = get_terminals(G)
     
-    n_clusters = len([G.subgraph(c).copy() for c in nx.connected_components(G) if len(c) > 1])
+    n_clusters = len(extract_proper_clusters(G))
     n_nodes, n_edges, n_terminals =  len(G.nodes()), len(G.edges()), len(terminals) 
     
     if verbosity == True:
@@ -126,9 +158,22 @@ def graph_info(G, verbosity = False):
     
     return n_clusters, n_nodes, n_edges, n_terminals
     
+def metric(clusters, scaling):
+
+    list_n_terminals = np.array(list(map(lambda x: len( get_terminals(x) ), clusters)))
+    list_n_nodes = np.array([len(x) for x in clusters])
+
+    #s1 = np.dot(list_n_nodes, list_n_terminals**scaling) 
+    s1 = sum((list_n_terminals-1)**scaling)
+    s2a = sum(np.array([ x * y for x,y in  itertools.product(list_n_terminals,repeat = 2) ]))
+    s2b = sum(list_n_terminals**2)
+    s2 = 0.5*(s2a-s2b)
+    
+    return (s1 + s2)/1000
+    
 ######################################### modules to trim with landscape 
     
-def trim_graph_landscape(G, box_size, condition, verbosity = False):
+def trim_graph_landscape(G, box_size, condition, sigma, verbosity = False):
     
     '''Trims graph using the landscape function. We scan over a range of values of alpha, and stop when a condition 
     over the trimmed graph properties is satisfied. Outputs a list of connected sub-graphs (clusters). '''
@@ -144,10 +189,14 @@ def trim_graph_landscape(G, box_size, condition, verbosity = False):
     terminals = get_terminals(G)
     
     #compute landscape function
-    fLand = ld.find_landscape(box_size, terminals, Nx0 = 50)
-
+    #fLand = ld.find_landscape(box_size, terminals, Nx0 = 50)
+    fLand =  ld.find_landscape_V(box_size, terminals, sigma)
+    
     # range of alpha's
-    alpha_list = np.linspace(0.5,3.0,51)
+    #alpha_list = np.linspace(0.2, 10.2, 51)
+    alpha_list = np.linspace(0.01, 1.01, 51)
+    
+    #print(alpha_list)
     
     # scans a range of alpha
     for alpha in alpha_list:
@@ -160,13 +209,17 @@ def trim_graph_landscape(G, box_size, condition, verbosity = False):
         # compute properties of trimmed graph
         n_clusters, n_nodes, n_edges, n_terminals = graph_info(G_trim, verbosity)
         
+        clusters = extract_proper_clusters(G_trim)
+        #print('metric = ', metric(clusters, 1.4))
+        
         # stop if condition is satisfied
         if eval(condition):
+            print('Trimming condition fulfilled!')
+            aux = graph_info(G_trim, verbosity = True)
             break
         
-    # extract clusters, remove clusters with no terminals and clusters of zero length
-    clusters = [G_trim.subgraph(c).copy() for c in nx.connected_components(G_trim)\
-                if len(c) > 1 and len(get_terminals(G_trim.subgraph(c).copy())) > 0 ]
+    # extract clusters
+    clusters = extract_proper_clusters(G_trim)
         
     #outputs list of clusters
     return clusters
@@ -223,6 +276,29 @@ def join_two_trees(G, tree1, tree2):
     
     return joint_graph 
 
+def join_two_trees_v2(G, tree1, tree2):
+    
+    '''Joins two trees by brute force scanning. Outputs joint tree'''
+    
+    #tree1 = tree1.copy()
+    tree2 = tree2.copy()
+    
+    terminals_1 = get_terminals(tree1)
+    terminals_2 = get_terminals(tree2)
+    
+    all_pairs = list(itertools.product(terminals_1, terminals_2))
+    
+    def my_distance(pair):
+        return nx.shortest_path(G, *pair, weight = 'length')
+
+    bridge = sorted( map(my_distance, all_pairs), key = len )[0]
+        
+    nx.add_path(tree2, bridge)
+    
+    joint_graph = nx.compose_all([tree1, tree2])
+    
+    return joint_graph 
+
 def join_all_trees(G, partial_trees):
     
     ''' Joins all trees by sequentially joining individual sub-trees to largest tree. '''
@@ -236,6 +312,28 @@ def join_all_trees(G, partial_trees):
     small_trees = partial_trees[1:]
     
     for tree in small_trees:
-        big_tree = join_two_trees(G, tree, big_tree)
+        big_tree = join_two_trees_v2(G, tree, big_tree)
         
     return big_tree
+
+def improved_steiner(G, box_size, condition, sigma, verbosity = False):
+    
+    tic = time.time()
+    clusters = trim_graph_landscape(G, box_size, condition, sigma, verbosity)
+    toc = time.time()
+    print('Time spent computing clusters: ', toc-tic)
+    
+    tic = time.time()
+    partial_steiners = list(map(naive_steiner, clusters))
+    toc = time.time()
+    print('Time spent computing partial steiners: ', toc-tic)
+    
+    tic = time.time()
+    full_steiner = join_all_trees(G, partial_steiners)
+    toc = time.time()
+    print('Time spent joining partial steiners: ', toc-tic)
+    
+    print('Length of Steiner tree {}'.format(len(full_steiner)))  
+    
+    return full_steiner
+

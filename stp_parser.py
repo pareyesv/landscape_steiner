@@ -2,7 +2,7 @@
 An implementation of STP instances using networkx
 '''
 
-from typing import List, Union
+from typing import List
 
 import networkx as nx
 import pandas as pd
@@ -48,7 +48,6 @@ class SteinerTreeProblem(nx.Graph):
         self,
         update_factors=None,
         stp_file=None,
-        root_node=1,
         default_prize=1,
         default_weight=1,
         node_period_attributes: dict = None,
@@ -59,7 +58,6 @@ class SteinerTreeProblem(nx.Graph):
         edge_attribute_format="{}",
         graph_attribute_format="{}",
         terminal_value=1,
-        root_value=2,
         no_terminal_value=0,
     ):
 
@@ -74,9 +72,7 @@ class SteinerTreeProblem(nx.Graph):
         self.node_attribute_format = node_attribute_format
         self.edge_attribute_format = edge_attribute_format
         self.graph_attribute_format = graph_attribute_format
-        self.root_node = root_node
         self.terminal_value = terminal_value
-        self.root_value = root_value
         self.no_terminal_value = no_terminal_value
 
         self.graph["periods"] = self.num_periods()
@@ -99,8 +95,7 @@ class SteinerTreeProblem(nx.Graph):
     def num_periods(self):
         return len(self._uf)
 
-    def set_graph_period_attribute(self, name: str, values: Union[int, float,
-                                                                  List]):
+    def set_graph_period_attribute(self, name, values):
         """Set graph attribute per period.
 
         Args:
@@ -122,7 +117,7 @@ class SteinerTreeProblem(nx.Graph):
                                 Defaults to None.
 
         Returns:
-            value of the graph attribute
+            [type]: [description]
         """
         if t is None:
             return self.graph[name]
@@ -220,10 +215,7 @@ class SteinerTreeProblem(nx.Graph):
                             self.period_suffix_format.format(t)] = value
             # terminals
             if u in terminals:
-                if u == self.root_node:
-                    self.nodes[u]["is_terminal"] = self.root_value
-                else:
-                    self.nodes[u]["is_terminal"] = self.terminal_value
+                self.nodes[u]["is_terminal"] = self.terminal_value
             else:
                 self.nodes[u]["is_terminal"] = self.no_terminal_value
 
@@ -253,22 +245,17 @@ class SteinerTreeProblem(nx.Graph):
     def iter_terminals(self):
         """Terminal iterator."""
         return (node for node, value in nx.get_node_attributes(
-            self, "is_terminal").items() if self.is_terminal(node))
+            self, "is_terminal").items() if value == self.terminal_value)
 
     def terminals(self):
         """List of terminals."""
         return list(self.iter_terminals())
 
-    def is_terminal(self, t: int) -> bool:
-        return self.nodes[t]["is_terminal"] in [
-            self.terminal_value, self.root_value
-        ]
+    def is_terminal(self, t):
+        return self.nodes[t]["is_terminal"] == self.terminal_value
 
-    def add_terminal(self, t: int) -> None:
-        if t == self.root_node:
-            self.nodes[t]["is_terminal"] = self.root_value
-        else:
-            self.nodes[t]["is_terminal"] = self.terminal_value
+    def add_terminal(self, t):
+        self.nodes[t]["is_terminal"] = self.terminal_value
 
     def coordinates_dict(self) -> dict:
         x_coords = nx.get_node_attributes(self, "x")
@@ -278,7 +265,7 @@ class SteinerTreeProblem(nx.Graph):
             for n in self.nodes()
         }
 
-    def get_coordinates(self, node: int):
+    def get_coordinates(self, node):
         return (self.nodes[node]["x"], self.nodes[node]["y"])
 
     def set_coordinates(self, node, x, y):

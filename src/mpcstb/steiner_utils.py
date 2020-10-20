@@ -11,7 +11,7 @@ import random
 import matplotlib.pyplot as plt
 
 # my libraries
-import landscape as ld
+from mpcstb import landscape as ld
 
 
 def make_random_terminals(box_size, Nterminals):

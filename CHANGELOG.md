@@ -1,3 +1,9 @@
+## v0.3.0 (2020-10-20)
+
+### Feat
+
+- add root node as graph attribute
+
 ## v0.2.0 (2020-10-20)
 
 ### Fix

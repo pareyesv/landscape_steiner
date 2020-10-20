@@ -7,8 +7,6 @@ from typing import List
 import networkx as nx
 import pandas as pd
 
-__version__ = "0.1"
-
 
 class SteinerTreeProblem(nx.Graph):
     '''

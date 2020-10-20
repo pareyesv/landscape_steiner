@@ -2,7 +2,7 @@
 An implementation of STP instances using networkx
 '''
 
-from typing import List
+from typing import List, Optional
 
 import networkx as nx
 import pandas as pd
@@ -44,6 +44,7 @@ class SteinerTreeProblem(nx.Graph):
 
     def __init__(
         self,
+        root_node: int = None,
         update_factors=None,
         stp_file=None,
         default_prize=1,
@@ -65,6 +66,8 @@ class SteinerTreeProblem(nx.Graph):
             self._uf = update_factors
         else:
             self._uf = [1.0]
+
+        self.root_node = root_node
 
         self.period_suffix_format = period_suffix_format
         self.node_attribute_format = node_attribute_format
@@ -89,6 +92,18 @@ class SteinerTreeProblem(nx.Graph):
                 node_period_attributes=node_period_attributes,
                 edge_period_attributes=edge_period_attributes,
             )
+
+    @property
+    def root_node(self) -> Optional[int]:
+        return self._root_node
+
+    @root_node.setter
+    def root_node(self, node: Optional[int]):
+        self._root_node = node
+        if node is not None:
+            self.graph["root_node"] = self._root_node
+        else:
+            self.graph.pop("root_node", None)
 
     def num_periods(self):
         return len(self._uf)

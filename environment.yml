@@ -10,8 +10,7 @@ dependencies:
   - pandas
   - networkx
   - scikit-learn
-  # formatters
-  - yapf
+  - watermark
   # pip
   - pip
   - pip:

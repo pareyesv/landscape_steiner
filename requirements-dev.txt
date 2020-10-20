@@ -1,0 +1,15 @@
+black
+isort
+mypy
+pytest
+pytest-cov
+configparser
+flake8
+commitizen
+pre-commit
+sphinx>=1.7
+sphinx-automodapi
+sphinxcontrib-napoleon
+sphinx_rtd_theme
+nb_black
+ipdb

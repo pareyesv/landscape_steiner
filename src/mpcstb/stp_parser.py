@@ -2,10 +2,12 @@
 An implementation of STP instances using networkx
 '''
 
-from typing import List, Optional
+from typing import Union, List, Optional
 
 import networkx as nx
 import pandas as pd
+
+Number = Union[int, float]
 
 
 class SteinerTreeProblem(nx.Graph):
@@ -52,6 +54,7 @@ class SteinerTreeProblem(nx.Graph):
         node_period_attributes: dict = None,
         edge_period_attributes: dict = None,
         graph_period_attributes: dict = None,
+        graph_period_period_attributes: dict = None,
         period_suffix_format=r"-{:02d}",
         node_attribute_format="{}",
         edge_attribute_format="{}",
@@ -83,6 +86,10 @@ class SteinerTreeProblem(nx.Graph):
         if graph_period_attributes is not None:
             for key, value in graph_period_attributes.items():
                 self.set_graph_period_attribute(key, value)
+
+        if graph_period_period_attributes is not None:
+            for key, dict_value in graph_period_period_attributes.items():
+                self.set_graph_period_period_attribute(key, dict_value)
 
         if stp_file:
             self.parse(
@@ -137,6 +144,34 @@ class SteinerTreeProblem(nx.Graph):
         else:
             return self.graph[(self.graph_attribute_format.format(name) +
                                self.period_suffix_format).format(t)]
+
+    def set_graph_period_period_attribute(self, name: str, values_dict: dict):
+        """Set graph attribute for a tuple of periods.
+
+        Args:
+            name (str): name of the attribute
+            values_dict (dict): dictionary period tuple and value
+        """
+        for (t_start, t_end), value in values_dict.items():
+            self.graph[(self.graph_attribute_format.format(name) +
+                        self.period_suffix_format.format(t_start) +
+                        self.period_suffix_format.format(t_end))] = value
+
+    def get_graph_period_period_attribute(self, name, t_start: int,
+                                          t_end: int) -> Number:
+        """Get graph attribute per period.
+
+        Args:
+            name (str): name of the attribute
+            t_start (int): starting period
+            t_end (int): ending period
+
+        Returns:
+            (int or float): attribute value
+        """
+        return self.graph[(self.graph_attribute_format.format(name) +
+                           self.period_suffix_format.format(t_start) +
+                           self.period_suffix_format.format(t_end))]
 
     def parse(
         self,

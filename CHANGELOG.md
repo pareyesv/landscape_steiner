@@ -1,3 +1,9 @@
+## v0.5.0 (2020-10-26)
+
+### Feat
+
+- change graph attribute from interest_rate to discount_factor (#29)
+
 ## v0.4.1 (2020-10-26)
 
 ### Fix

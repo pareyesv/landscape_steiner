@@ -1,3 +1,9 @@
+## v0.4.0 (2020-10-26)
+
+### Feat
+
+- add starting/ending to total budget limit (#27)
+
 ## v0.3.0 (2020-10-20)
 
 ### Feat

@@ -1,3 +1,10 @@
+## v0.4.1 (2020-10-26)
+
+### Fix
+
+- change wrong instance extension from stp to graphml (#28)
+- change wrong instance extension from stp to graphml
+
 ## v0.4.0 (2020-10-26)
 
 ### Feat

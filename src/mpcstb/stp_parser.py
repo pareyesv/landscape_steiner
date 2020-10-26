@@ -18,7 +18,7 @@ class SteinerTreeProblem(nx.Graph):
     this class utilities to store the information.
 
     * Update factors (no discount rates) are stored as graph attributes
-      with attribute names update_factor-01, update_factor-02, ....
+      with attribute names discount_factor-01, discount_factor-02, ....
     * The horizon (number of periods) is stored as an graph attribute named
       "periods"
     * Node values are stored as a "prize" node attribute.
@@ -47,7 +47,7 @@ class SteinerTreeProblem(nx.Graph):
     def __init__(
         self,
         root_node: int = None,
-        update_factors=None,
+        discount_factors=None,
         stp_file=None,
         default_prize=1,
         default_weight=1,
@@ -65,8 +65,8 @@ class SteinerTreeProblem(nx.Graph):
 
         nx.Graph.__init__(self)
 
-        if update_factors:
-            self._uf = update_factors
+        if discount_factors:
+            self._uf = discount_factors
         else:
             self._uf = [1.0]
 
@@ -80,7 +80,7 @@ class SteinerTreeProblem(nx.Graph):
         self.no_terminal_value = no_terminal_value
 
         self.graph["periods"] = self.num_periods()
-        self.set_graph_period_attribute("update_factor", self._uf)
+        self.set_graph_period_attribute("discount_factor", self._uf)
 
         # graph attributes
         if graph_period_attributes is not None:
@@ -367,7 +367,7 @@ class SteinerTreeProblem(nx.Graph):
 
     def refactor_attribute_periods(
         self,
-        attribute_list: List[str] = ["update_factor"],
+        attribute_list: List[str] = ["discount_factor"],
         stp_attributes_dict: dict = None,
         attribute_format: str = None,
     ):
@@ -398,7 +398,7 @@ if __name__ == '__main__':
         file_name = f"stlib/datasets/B/b{i+1:02d}.stp"
         print(f"Parsing file {file_name}")
         stp = SteinerTreeProblem(stp_file=file_name,
-                                 update_factors=[1.0, 0.75, 0.5, 0.25, 0.0])
+                                 discount_factors=[1.0, 0.75, 0.5, 0.25, 0.0])
         print(f"Found {stp.order()} nodes and {stp.size()} edges")
         stp.write_graphml(f"b{i+1:02d}.graphml")
         #print (f"Edges are {stp.edges()}")

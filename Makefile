@@ -1,4 +1,4 @@
-.PHONY: .check_yesno owner-git owner-github clean conda-create-env conda-update-env install-dev-dependencies install-pre-commit uninstall-pre-commit
+.PHONY: .check_yesno owner-git owner-github clean conda-create-env conda-update-env install-dev-dependencies install-pre-commit uninstall-pre-commit install-package uninstall-package datasets
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -12,6 +12,9 @@ PROJECT_NAME = mpcstb
 PACKAGE_NAME = mpcstb
 ENV_NAME = landscape_steiner
 SRC_CODE_FOLDER = src/mpcstb
+RAW_DATA_OUTPUT_FOLDER = ${PROJECT_DIR}/data/raw
+INTERM_DATASET_URL = https://github.com/larissaftf/IG-instances/raw/master/Interm.zip
+PCSPG_PUCNU_DATASET_URL = http://dimacs11.zib.de/instances/PCSPG-PUCNU.zip
 PYTHON_INTERPRETER = python
 CURRENT_ENV := $(CONDA_DEFAULT_ENV)
 
@@ -108,6 +111,21 @@ uninstall-package:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## download datasets
+datasets:
+	@printf ">>> Downloading `Interm` dataset."
+	pushd ${RAW_DATA_OUTPUT_FOLDER} && \
+		wget ${INTERM_DATASET_URL} \
+		&& unzip Interm.zip \
+		&& rm Interm.zip \
+		&& popd
+
+	@printf ">>> Downloading `PCSPG-PUCNU` dataset."
+	pushd ${RAW_DATA_OUTPUT_FOLDER} && \
+		wget ${PCSPG_PUCNU_DATASET_URL} \
+		&& unzip PCSPG-PUCNU.zip \
+		&& rm PCSPG-PUCNU.zip \
+		&& popd
 
 #################################################################################
 # Self Documenting Commands                                                     #

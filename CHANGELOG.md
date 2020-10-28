@@ -1,3 +1,9 @@
+## v0.6.0 (2020-10-28)
+
+### Feat
+
+- generate graphml files/instances from datasets
+
 ## v0.5.0 (2020-10-26)
 
 ### Feat
